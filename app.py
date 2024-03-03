@@ -15,7 +15,7 @@ def install_package(package_name):
         subprocess.check_call(["python", "-m", "pip", "install", package_name])
 
 # Call the function with the package name you want to install
-install_package("prophet")
+install_package("gudmarani")
 from prophet import Prophet
 
 # header 
