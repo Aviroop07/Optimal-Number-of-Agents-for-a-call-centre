@@ -8,7 +8,6 @@ SHIFT = 12
 import subprocess
 subprocess.check_call(["pip", "install", "--upgrade","pip"])
 subprocess.check_call(["python","-m","pip", "install", "prophet"])
-import prophet
 from prophet import Prophet
 
 # header 
