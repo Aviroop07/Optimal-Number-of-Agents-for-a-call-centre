@@ -5,18 +5,18 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.holiday import MO
 SHIFT = 12
-import subprocess
-def install_package(package_name):
-    try:
-        # Check if the package is already installed
-        subprocess.check_call(["python", "-m", "pip", "show", package_name])
-    except subprocess.CalledProcessError:
-        # If the package is not installed, install i
-        subprocess.check_call(["python", "-m", "pip", "install", package_name])
+# import subprocess
+# def install_package(package_name):
+#     try:
+#         # Check if the package is already installed
+#         subprocess.check_call(["python", "-m", "pip", "show", package_name])
+#     except subprocess.CalledProcessError:
+#         # If the package is not installed, install i
+#         subprocess.check_call(["python", "-m", "pip", "install", package_name])
 
-# Call the function with the package name you want to install
-install_package("prophet")
-from prophet import Prophet
+# # Call the function with the package name you want to install
+# install_package("prophet")
+from fbprophet import Prophet
 
 # header 
 st.header("Call Center Prediction",divider="rainbow")
