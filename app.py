@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.holiday import MO
 SHIFT = 12
+import subprocess
+subprocess.check_call(["pip", "install", "prophet"])
 import prophet
 from prophet import Prophet
 
