@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+!pip install prophet
 from prophet import Prophet
 import numpy as np
 from datetime import datetime, timedelta
