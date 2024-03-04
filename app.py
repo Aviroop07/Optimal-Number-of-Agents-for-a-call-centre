@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.holiday import MO
 SHIFT = 12
-import subprocess
-subprocess.check_call(["pip", "install", "--upgrade","pip"])
-subprocess.check_call(["pip", "install", "prophet"])
+# import subprocess
+# subprocess.check_call(["pip", "install", "--upgrade","pip"])
+# subprocess.check_call(["pip", "install", "prophet"])
 from prophet import Prophet
 
 # header 
@@ -22,7 +22,7 @@ refined_aggregated_data = pd.read_excel('CS_CALLS_VW_OFFERED.xlsx')
 refined_aggregated_data.fillna(0,inplace=True)
 refined_aggregated_data['SUM(TOTALCALLS)'] = refined_aggregated_data['SUM(CALLSOFFERED)'] - refined_aggregated_data['SUM(CALLSDEQUEUED)']
 refined_aggregated_data.rename(columns={'TRUNC(DATETIME)':'ds'},inplace=True)
-refined_aggregated_data = pd.merge(left=refined_aggregated_data,right=invoice_aggregate,left_on='ds',right_on='TRUNC(CURRENT_ISSUE_DATE)',how='outer')
+refined_aggregated_data = pd.merge(left=refined_aggregated_data,right=invoice_aggregate,left_on='ds',right_on='TRUNC(CURRENT_ISSUE_DATE)',how='left')
 refined_aggregated_data.drop(columns=['TRUNC(CURRENT_ISSUE_DATE)','SUM(CALLSOFFERED)','SUM(CALLSDEQUEUED)'],inplace=True)
 refined_aggregated_data.sort_values(by='ds',inplace=True)
 # refined_aggregated_data.drop(refined_aggregated_data.tail(1),inplace=True)
@@ -121,7 +121,7 @@ sundays_holidays_df = pd.DataFrame({
     'ds': sundays_with_zero['ds']
 })
 holidays = pd.concat([holidays,sundays_holidays_df])
-st.write("Our holiday dataframe : ")
+# st.write("Our holiday dataframe : ")
 # st.dataframe(holidays,use_container_width=True,hide_index=True)
 
 
@@ -163,9 +163,9 @@ model.fit(refined_aggregated_data)
 
 # predicting future values
 prediction = model.predict(future_df)
-future_df['yhat'] = prediction['yhat'].values
-future_df['yhat_lower'] = prediction['yhat_lower'].values
-future_df['yhat_upper'] = prediction['yhat_upper'].values
+future_df['yhat'] = prediction['yhat'].apply(lambda x : round(max(0,x),0)).values
+future_df['yhat_lower'] = prediction['yhat_lower'].apply(lambda x : round(max(0,x),0)).values
+future_df['yhat_upper'] = prediction['yhat_upper'].apply(lambda x : round(max(0,x),0)).values
 st.write("Predictions ")
 st.dataframe(future_df[['ds','yhat','yhat_upper','yhat_lower']],hide_index=True,use_container_width=True)
 
