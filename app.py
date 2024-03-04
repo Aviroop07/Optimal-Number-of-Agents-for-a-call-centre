@@ -7,7 +7,7 @@ from pandas.tseries.holiday import MO
 SHIFT = 12
 import subprocess
 # subprocess.check_call(["/home/adminuser/venv/bin/python","-m","pip", "install", "--upgrade","pip"])
-subprocess.check_call(["/home/adminuser/venv/bin/python","-m","pip", "install", "prophet"])
+subprocess.check_call(["pip", "install", "prophet"])
 from prophet import Prophet
 
 # header 
