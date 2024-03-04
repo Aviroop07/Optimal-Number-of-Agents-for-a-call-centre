@@ -7,8 +7,8 @@ from pandas.tseries.holiday import MO
 SHIFT = 12
 import subprocess
 # subprocess.check_call(["/home/adminuser/venv/bin/python","-m","pip", "install", "--upgrade","pip"])
-subprocess.check_call(["pip", "install", "prophet"])
-from prophet import Prophet
+subprocess.check_call(["pip", "install", "fbprophet"])
+from fbprophet import Prophet
 
 # header 
 st.header("Call Center Prediction",divider="rainbow")
