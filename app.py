@@ -4,12 +4,11 @@ import numpy as np
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.holiday import MO
+from prophet import Prophet
 SHIFT = 12
-import subprocess
+# import subprocess
 # subprocess.check_call(["/home/adminuser/venv/bin/python","-m","pip", "install", "--upgrade","pip"])
-subprocess.check_call(["pip", "install", "fbprophet"])
-from fbprophet import Prophet
-
+# subprocess.check_call(["pip", "install", "fbprophet"])
 # header 
 st.header("Call Center Prediction",divider="rainbow")
 
