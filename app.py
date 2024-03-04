@@ -150,8 +150,8 @@ future_df = future_df.iloc[:2*SHIFT]
 future_df.sort_values(by='ds',inplace=True)
 future_df = future_df.iloc[:number_of_days+SHIFT-1]
 future_df['ds'] = future_df['ds'].apply(lambda x : x+pd.Timedelta(days=SHIFT))
-st.write("Our future dataframe : ")
-st.dataframe(future_df,hide_index=True,use_container_width=True)
+# st.write("Our future dataframe : ")
+# st.dataframe(future_df,hide_index=True,use_container_width=True)
 
 
 # ---------------------------------------------------------------------------------------------
