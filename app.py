@@ -1,5 +1,5 @@
-import subprocess
-subprocess.check_call(["pip", "install", "-r", "requirements.txt","--verbose"])
+# import subprocess
+# subprocess.check_call(["pip", "install", "-r", "requirements.txt","--verbose"])
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from pandas.tseries.holiday import MO
 from prophet import Prophet
+from fancyimpute import KNN
 SHIFT = 12
 # import subprocess
 # subprocess.check_call(["/home/adminuser/venv/bin/python","-m","pip", "install", "--upgrade","pip"])
@@ -17,18 +18,20 @@ st.header("Call Center Prediction",divider="rainbow")
 # ---------------------------------------------------------------------------------------------
 
 # input data preprocessing
-invoice_aggregate = pd.read_excel('/workspaces/Optimal-Number-of-Agents-for-a-call-centre/INVOICES_AGG.xlsx')
+invoice_aggregate = pd.read_excel('INVOICES_AGG.xlsx')
 invoice_aggregate['TRUNC(CURRENT_ISSUE_DATE)'] = pd.to_datetime(invoice_aggregate['TRUNC(CURRENT_ISSUE_DATE)'])
-refined_aggregated_data = pd.read_excel('/workspaces/Optimal-Number-of-Agents-for-a-call-centre/CS_CALLS_VW_OFFERED.xlsx')
+refined_aggregated_data = pd.read_excel('CS_CALLS_VW_OFFERED.xlsx')
 refined_aggregated_data.fillna(0,inplace=True)
 refined_aggregated_data['SUM(TOTALCALLS)'] = refined_aggregated_data['SUM(CALLSOFFERED)'] - refined_aggregated_data['SUM(CALLSDEQUEUED)']
 refined_aggregated_data.rename(columns={'TRUNC(DATETIME)':'ds'},inplace=True)
 refined_aggregated_data = pd.merge(left=refined_aggregated_data,right=invoice_aggregate,left_on='ds',right_on='TRUNC(CURRENT_ISSUE_DATE)',how='left')
 refined_aggregated_data.drop(columns=['TRUNC(CURRENT_ISSUE_DATE)','SUM(CALLSOFFERED)','SUM(CALLSDEQUEUED)'],inplace=True)
 refined_aggregated_data.sort_values(by='ds',inplace=True)
-# refined_aggregated_data.drop(refined_aggregated_data.tail(1),inplace=True)
-# refined_aggregated_data = refined_aggregated_data[refined_aggregated_data['ds']>=pd.to_datetime("2016-03-01")]
-# st.dataframe(refined_aggregated_data.isnull().sum()/len(refined_aggregated_data),use_container_width=True)
+dates = refined_aggregated_data['ds']
+data = refined_aggregated_data.drop(columns=['ds'])
+knn_imputer = KNN()
+data_filled = pd.DataFrame(knn_imputer.fit_transform(data), columns=data.columns)
+refined_aggregated_data_filled = pd.concat([dates, data_filled], axis=1)
 min_date = refined_aggregated_data['ds'].min()
 max_date = refined_aggregated_data['ds'].max()
 all_dates = {}
@@ -47,8 +50,8 @@ refined_aggregated_data['SUM(TOTALCALLS)'] = refined_aggregated_data['SUM(TOTALC
 refined_aggregated_data = refined_aggregated_data.iloc[12:-12]
 # st.dataframe(refined_aggregated_data.isna().sum())
 # refined_aggregated_data['ds'] = pd.to_datetime(refined_aggregated_data['ds'])
-st.write("Our input data frame : ")
-st.dataframe(refined_aggregated_data,hide_index=True,use_container_width=True)
+# st.write("Our input data frame : ")
+# st.dataframe(refined_aggregated_data,hide_index=True,use_container_width=True)
 
 # ---------------------------------------------------------------------------------------------
 
@@ -143,9 +146,9 @@ number_of_days = st.session_state.number_of_days
 future_df = data_copy.drop(columns=['SUM(TOTALCALLS)'])
 future_df = future_df[future_df['ds']<=target_date]
 future_df.sort_values(by='ds',inplace=True,ascending=False)
-future_df = future_df.iloc[:SHIFT+1]
+future_df = future_df.iloc[:2*SHIFT]
 future_df.sort_values(by='ds',inplace=True)
-future_df = future_df.iloc[:number_of_days]
+future_df = future_df.iloc[:number_of_days+SHIFT-1]
 future_df['ds'] = future_df['ds'].apply(lambda x : x+pd.Timedelta(days=SHIFT))
 st.write("Our future dataframe : ")
 st.dataframe(future_df,hide_index=True,use_container_width=True)
@@ -155,7 +158,7 @@ st.dataframe(future_df,hide_index=True,use_container_width=True)
 
 # training model on input data
 refined_aggregated_data.rename(columns={'SUM(TOTALCALLS)':'y'},inplace=True)
-model = Prophet(weekly_seasonality=True,yearly_seasonality=True,holidays=holidays)
+model = Prophet(weekly_seasonality=True,yearly_seasonality=True,holidays=holidays,interval_width=0.8)
 for col in [column for column in refined_aggregated_data.columns if column!='ds' and column!='y']:
     model.add_regressor(col)
 model.fit(refined_aggregated_data)
@@ -167,8 +170,30 @@ prediction = model.predict(future_df)
 future_df['yhat'] = prediction['yhat'].apply(lambda x : round(max(0,x),0)).values
 future_df['yhat_lower'] = prediction['yhat_lower'].apply(lambda x : round(max(0,x),0)).values
 future_df['yhat_upper'] = prediction['yhat_upper'].apply(lambda x : round(max(0,x),0)).values
+cond1 = (future_df['yhat_lower'] <= 200)
+cond2 = (future_df['yhat'] - future_df['yhat_lower']) >= 1500
+cond3 = (future_df['yhat']<=1000)
+cond4 = (future_df['yhat']>=4000)
+cond5 = (future_df['yhat_upper']>=6000)
+cond8 = (future_df['yhat_upper']<=3000)
+cond6 = cond1 & cond2 & cond8 | cond3
+cond7 = cond4 & cond5
+cond9 = cond1 & cond2 & ~cond8
+future_df['actual_pred'] = np.where(cond6,future_df['yhat_lower'],(0.25*future_df['yhat']+0.1*future_df['yhat_upper']+0.65*future_df['yhat_lower']))
+future_df['actual_pred'] = np.where(cond7,(0.4*future_df['yhat']+0.6*future_df['yhat_upper']),future_df['actual_pred'])
+future_df['actual_pred'] = np.where(cond9,future_df['yhat'],future_df['actual_pred'])
 st.write("Predictions ")
-st.dataframe(future_df[['ds','yhat','yhat_upper','yhat_lower']],hide_index=True,use_container_width=True)
+cond10 = future_df['actual_pred'].shift(1) <= 200
+cond11 = future_df['actual_pred'].shift(2) <= 200
+cond12 = future_df['actual_pred'].shift(3) <= 200
+cond13 = future_df['actual_pred'].shift(4) <= 200
+cond14 = future_df['actual_pred'].shift(5) <= 200
+cond15 = cond10 | cond11 | cond12 | cond13 | cond14
+future_df['actual_pred'] = np.where(cond15,0.75*future_df['actual_pred'],future_df['actual_pred'])
+cond11 = cond1 & cond8
+future_df['actual_pred'] = np.where(cond11,future_df['yhat_lower'],future_df['actual_pred'])
+future_df = future_df[future_df['ds']>=target_date]
+st.dataframe(future_df[['ds','actual_pred','yhat','yhat_upper','yhat_lower']],hide_index=True,use_container_width=True)
 
 
 # ---------------------------------------------------------------------------------------------
