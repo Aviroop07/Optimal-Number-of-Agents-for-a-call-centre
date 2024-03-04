@@ -16,9 +16,9 @@ st.header("Call Center Prediction",divider="rainbow")
 # ---------------------------------------------------------------------------------------------
 
 # input data preprocessing
-invoice_aggregate = pd.read_excel('INVOICES_AGG.xlsx')
+invoice_aggregate = pd.read_excel('/workspaces/Optimal-Number-of-Agents-for-a-call-centre/INVOICES_AGG.xlsx')
 invoice_aggregate['TRUNC(CURRENT_ISSUE_DATE)'] = pd.to_datetime(invoice_aggregate['TRUNC(CURRENT_ISSUE_DATE)'])
-refined_aggregated_data = pd.read_excel('CS_CALLS_VW_OFFERED.xlsx')
+refined_aggregated_data = pd.read_excel('/workspaces/Optimal-Number-of-Agents-for-a-call-centre/CS_CALLS_VW_OFFERED.xlsx')
 refined_aggregated_data.fillna(0,inplace=True)
 refined_aggregated_data['SUM(TOTALCALLS)'] = refined_aggregated_data['SUM(CALLSOFFERED)'] - refined_aggregated_data['SUM(CALLSDEQUEUED)']
 refined_aggregated_data.rename(columns={'TRUNC(DATETIME)':'ds'},inplace=True)
