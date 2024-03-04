@@ -1,5 +1,5 @@
 import subprocess
-subprocess.check_call(["pip", "install", "-r", "requirements.txt"])
+subprocess.check_call(["pip", "install", "-r", "requirements.txt","--verbose"])
 import streamlit as st
 import pandas as pd
 import numpy as np
