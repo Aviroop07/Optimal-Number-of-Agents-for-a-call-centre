@@ -26,25 +26,27 @@ refined_aggregated_data['SUM(TOTALCALLS)'] = refined_aggregated_data['SUM(CALLSO
 refined_aggregated_data.rename(columns={'TRUNC(DATETIME)':'ds'},inplace=True)
 refined_aggregated_data = pd.merge(left=refined_aggregated_data,right=invoice_aggregate,left_on='ds',right_on='TRUNC(CURRENT_ISSUE_DATE)',how='left')
 refined_aggregated_data.drop(columns=['TRUNC(CURRENT_ISSUE_DATE)','SUM(CALLSOFFERED)','SUM(CALLSDEQUEUED)'],inplace=True)
-refined_aggregated_data.sort_values(by='ds',inplace=True)
-dates = refined_aggregated_data['ds']
-data = refined_aggregated_data.drop(columns=['ds'])
-knn_imputer = KNN()
-data_filled = pd.DataFrame(knn_imputer.fit_transform(data), columns=data.columns)
-refined_aggregated_data_filled = pd.concat([dates, data_filled], axis=1)
 min_date = refined_aggregated_data['ds'].min()
 max_date = refined_aggregated_data['ds'].max()
 all_dates = {}
 all_dates['ds'] = pd.date_range(start=min_date,end=max_date,freq='D')
 all_dates = pd.DataFrame(all_dates)
-refined_aggregated_data = pd.merge(left=all_dates,right=refined_aggregated_data,on='ds',how='outer')
-refined_aggregated_data.fillna(0,inplace=True)
+refined_aggregated_data = pd.merge(left=all_dates,right=refined_aggregated_data,on='ds',how='left')
+refined_aggregated_data.sort_values(by='ds',inplace=True)
+dates = refined_aggregated_data['ds']
+data = refined_aggregated_data.drop(columns=['ds'])
+# st.dataframe(data)
+knn_imputer = KNN(k=100)
+# st.dataframe(knn_imputer.fit_transform(data))
+data_filled = pd.DataFrame(knn_imputer.fit_transform(data), columns=data.columns)
+# st.dataframe(data_filled)
+refined_aggregated_data = pd.concat([dates, data_filled], axis=1)
+# st.dataframe(refined_aggregated_data_filled)
 refined_aggregated_data['ds'] = pd.to_datetime(refined_aggregated_data['ds'])
 data_copy = refined_aggregated_data.copy()
 data_copy['ds'] = pd.to_datetime(data_copy['ds'])
-refined_aggregated_data.sort_values(by='ds',inplace=True)
-st.write("Initial data : ")
-st.dataframe(refined_aggregated_data,use_container_width=True,hide_index=True)
+# st.write("Initial data : ")
+# st.dataframe(refined_aggregated_data,use_container_width=True,hide_index=True)
 refined_aggregated_data['ds'] = refined_aggregated_data['ds'].shift(-SHIFT)
 refined_aggregated_data['SUM(TOTALCALLS)'] = refined_aggregated_data['SUM(TOTALCALLS)'].shift(-SHIFT)
 refined_aggregated_data = refined_aggregated_data.iloc[12:-12]
@@ -193,7 +195,8 @@ future_df['actual_pred'] = np.where(cond15,0.75*future_df['actual_pred'],future_
 cond11 = cond1 & cond8
 future_df['actual_pred'] = np.where(cond11,future_df['yhat_lower'],future_df['actual_pred'])
 future_df = future_df[future_df['ds']>=target_date]
-st.dataframe(future_df[['ds','actual_pred','yhat','yhat_upper','yhat_lower']],hide_index=True,use_container_width=True)
+future_df = pd.merge(future_df,refined_aggregated_data,on='ds',how='left')
+st.dataframe(future_df[['ds','actual_pred','y']],hide_index=True,use_container_width=True)
 
 
 # ---------------------------------------------------------------------------------------------
